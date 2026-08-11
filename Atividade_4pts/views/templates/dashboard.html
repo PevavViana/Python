@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Painel de Tarefas{% endblock %}
+{% block content %}
+
+<div class="alert alert-info">
+    <i class="bi bi-quote"></i> <em>{{ frase }}</em>
+</div>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="mb-0"><i class="bi bi-list-check"></i> Minhas tarefas</h2>
+    <div class="d-flex gap-2 align-items-center">
+        <select id="filtro-status" class="form-select form-select-sm">
+            <option value="" {% if status_filtro == 'todos' %}selected{% endif %}>Todas</option>
+            {% for s in status_validos %}
+                <option value="{{ s }}" {% if status_filtro == s %}selected{% endif %}>
+                    {{ s.replace('_', ' ') | capitalize }}
+                </option>
+            {% endfor %}
+        </select>
+        <a href="{{ url_for('tarefas.nova_tarefa') }}" class="btn btn-primary btn-sm text-nowrap">
+            <i class="bi bi-plus-lg"></i> Nova tarefa
+        </a>
+    </div>
+</div>
+
+<div id="lista-tarefas" class="row g-3">
+    {% include "_lista_tarefas.html" %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Item 8: filtro por status via dropdown, sem recarregar a página (rota JSON).
+    document.getElementById('filtro-status').addEventListener('change', async (evento) => {
+        const status = evento.target.value;
+        const url = status ? `/api/tarefas/filtro?status=${status}` : '/api/tarefas/filtro';
+        const resposta = await fetch(url);
+        const tarefas = await resposta.json();
+        renderizarTarefas(tarefas);
+    });
+
+    const CORES_STATUS = {
+        pendente: 'warning',
+        em_andamento: 'primary',
+        concluida: 'success',
+    };
+
+    function renderizarTarefas(tarefas) {
+        const container = document.getElementById('lista-tarefas');
+        if (tarefas.length === 0) {
+            container.innerHTML = '<div class="col-12"><p class="text-muted">Nenhuma tarefa encontrada.</p></div>';
+            return;
+        }
+        container.innerHTML = tarefas.map((t) => `
+            <div class="col-md-4">
+                <div class="card border-${CORES_STATUS[t.status] || 'secondary'} h-100">
+                    <div class="card-body">
+                        <span class="badge bg-${CORES_STATUS[t.status] || 'secondary'} mb-2">
+                            ${t.status.replace('_', ' ')}
+                        </span>
+                        <h5 class="card-title">${t.titulo}</h5>
+                        <p class="card-text text-muted">${t.descricao || ''}</p>
+                    </div>
+                    <div class="card-footer bg-transparent d-flex gap-2">
+                        <a href="/editar/${t.id}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="/excluir/${t.id}" onsubmit="return confirm('Excluir esta tarefa?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% set cores = {'pendente': 'warning', 'em_andamento': 'primary', 'concluida': 'success'} %}
+{% if tarefas %}
+    {% for t in tarefas %}
+    <div class="col-md-4">
+        <div class="card border-{{ cores.get(t.status, 'secondary') }} h-100">
+            <div class="card-body">
+                <span class="badge bg-{{ cores.get(t.status, 'secondary') }} mb-2">
+                    {{ t.status.replace('_', ' ') }}
+                </span>
+                <h5 class="card-title">{{ t.titulo }}</h5>
+                <p class="card-text text-muted">{{ t.descricao }}</p>
+            </div>
+            <div class="card-footer bg-transparent d-flex gap-2">
+                <a href="{{ url_for('tarefas.editar', tarefa_id=t.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <form method="post" action="{{ url_for('tarefas.excluir', tarefa_id=t.id) }}"
+                      onsubmit="return confirm('Excluir esta tarefa?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="col-12"><p class="text-muted">Nenhuma tarefa encontrada.</p></div>
+{% endif %}
